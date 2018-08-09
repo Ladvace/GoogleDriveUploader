@@ -17,7 +17,9 @@
     "babel-preset-es2015": "*",
     "babelify": "7.2.0",
     "eslint": "^4.19.1",
-    "eslint-config-airbnb": "*"
+    "eslint-config-airbnb": "*",
+    "eslint-config-airbnb-base": "^13.0.0",
+    "eslint-plugin-import": "^2.13.0"
   },
   "dependencies": {
     "bluebird": "^3.5.1",
