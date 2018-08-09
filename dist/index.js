@@ -52,16 +52,19 @@ async function getAccessToken(oAuth2Client) {
   });
   var code = await rl.questionAsync('Enter the code from that page here: ');
   rl.close();
-  return oAuth2Client.getToken(code, async function (err, token) {
-    if (err) {
-      console.log(err);
-      return;
-    }
-    oAuth2Client.setCredentials(token);
+
+  try {
+    //const getTokenAsync = Promise.promisify(oAuth2Client.getToken);
+    var _ref = await oAuth2Client.getToken(code),
+        tokens = _ref.tokens;
+
+    oAuth2Client.setCredentials(tokens);
     // Store the token to disk for later program executions
-    await _util2.default.promisify(_fs2.default.writeFile)(TOKEN_PATH, JSON.stringify(token));
+    await _util2.default.promisify(_fs2.default.writeFile)(TOKEN_PATH, JSON.stringify(tokens));
     return oAuth2Client;
-  });
+  } catch (error) {
+    console.log(error.message);
+  }
 }
 
 async function listFiles(auth) {

@@ -29,16 +29,21 @@ async function getAccessToken(oAuth2Client) {
   });
   const code = await rl.questionAsync('Enter the code from that page here: ');
   rl.close();
-  return oAuth2Client.getToken(code, async (err, token) => {
-    if (err) {
-      console.log(err);
-      return;
-    }
-    oAuth2Client.setCredentials(token);
+
+  try{
+    //const getTokenAsync = Promise.promisify(oAuth2Client.getToken);
+    const {tokens} = await oAuth2Client.getToken(code);
+    oAuth2Client.setCredentials(tokens);
     // Store the token to disk for later program executions
-    await util.promisify(fs.writeFile)(TOKEN_PATH, JSON.stringify(token));
+    await util.promisify(fs.writeFile)(TOKEN_PATH, JSON.stringify(tokens));
     return oAuth2Client;
-  });
+   
+  }
+  catch(error){
+    console.log(error.message);
+  }
+ 
+    
 }
 
 
