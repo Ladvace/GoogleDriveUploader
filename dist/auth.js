@@ -1,0 +1,105 @@
+'use strict';
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+exports.readFileAsync = undefined;
+exports.authorize = authorize;
+exports.listFiles = listFiles;
+
+var _fs = require('fs');
+
+var _fs2 = _interopRequireDefault(_fs);
+
+var _readline = require('readline');
+
+var _readline2 = _interopRequireDefault(_readline);
+
+var _googleapis = require('googleapis');
+
+var _util = require('util');
+
+var _util2 = _interopRequireDefault(_util);
+
+var _bluebird = require('bluebird');
+
+var _opn = require('opn');
+
+var _opn2 = _interopRequireDefault(_opn);
+
+var _path = require('path');
+
+var _path2 = _interopRequireDefault(_path);
+
+var _os = require('os');
+
+var _promptSync = require('prompt-sync');
+
+var _promptSync2 = _interopRequireDefault(_promptSync);
+
+function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+
+var FILENAME = '813427.jpg';
+
+var SCOPES = ['https://www.googleapis.com/auth/drive.file'];
+var TOKEN_PATH = 'token.json';
+
+var readFileAsync = exports.readFileAsync = _util2.default.promisify(_fs2.default.readFile);
+
+async function getAccessToken(oAuth2Client) {
+  var authUrl = oAuth2Client.generateAuthUrl({
+    access_type: 'offline',
+    scope: SCOPES
+  });
+
+  await (0, _opn2.default)(authUrl);
+  var code = await (0, _promptSync2.default)()('Enter the code from that page here: ');
+  try {
+    // const getTokenAsync = Promise.promisify(oAuth2Client.getToken);
+    var _ref = await oAuth2Client.getToken(code),
+        tokens = _ref.tokens;
+
+    oAuth2Client.setCredentials(tokens);
+    // Store the token to disk for later program executions
+    await _util2.default.promisify(_fs2.default.writeFile)(TOKEN_PATH, JSON.stringify(tokens));
+  } catch (error) {
+    console.log(error.message);
+  }
+  return oAuth2Client;
+}
+
+async function authorize(credentials) {
+  var _credentials$installe = credentials.installed,
+      client_secret = _credentials$installe.client_secret,
+      client_id = _credentials$installe.client_id,
+      redirect_uris = _credentials$installe.redirect_uris; // eslint-disable-line
+
+  var oAuth2Client = new _googleapis.google.auth.OAuth2(client_id, client_secret, redirect_uris[0]);
+
+  // Check if we have previously stored a token.
+  try {
+    var token = await readFileAsync(TOKEN_PATH);
+    oAuth2Client.setCredentials(JSON.parse(token));
+  } catch (err) {
+    return getAccessToken(oAuth2Client);
+  }
+  return oAuth2Client;
+}
+
+async function listFiles(auth) {
+  var fileMetadata = {
+    name: FILENAME
+  };
+  var media = {
+    mimeType: 'image/jpeg',
+    body: _fs2.default.createReadStream(_path2.default.join((0, _os.homedir)(), 'Pictures', FILENAME))
+  };
+  var drive = _googleapis.google.drive({ version: 'v3', auth: auth });
+  var createDFile = _bluebird.Promise.promisify(drive.files.create);
+  var file = await createDFile({
+    resource: fileMetadata,
+    media: media,
+    fields: 'id'
+  });
+  console.log(file.data.id);
+}
