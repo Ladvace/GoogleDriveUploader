@@ -22,6 +22,8 @@
     "eslint-plugin-import": "^2.13.0"
   },
   "dependencies": {
+    "appjs": "0.0.20",
+    "appjs-win32": "0.0.19",
     "axios": "^0.18.0",
     "bluebird": "^3.5.1",
     "googleapis": "^32.0.0",

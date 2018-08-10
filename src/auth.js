@@ -9,8 +9,8 @@ import { homedir } from 'os';
 import prompt from 'prompt-sync';
 import mime from 'mime-types';
 
-const FILENAME = process.argv[2];
-const FILETYPE = mime.lookup(FILENAME);
+const FILEPATH = process.argv[2]; // Relative to Homedir
+const FILETYPE = mime.lookup(path.basename(FILEPATH));
 
 const SCOPES = ['https://www.googleapis.com/auth/drive.file'];
 const TOKEN_PATH = 'token.json';
@@ -56,10 +56,10 @@ export async function authorize(credentials) {
 
 export async function listFiles(auth) {
   const fileMetadata = {
-    name: FILENAME,
+    name: path.basename(FILEPATH),
   };
-  const fileWrite = fs.createReadStream(path.join(homedir(), 'Pictures', FILENAME));
-  const fileSize = fs.statSync(path.join(homedir(), 'Pictures', FILENAME)).size;
+  const fileWrite = fs.createReadStream(path.resolve(homedir(), FILEPATH));
+  // const fileSize = fs.statSync(path.resolve(homedir(), FILEPATH)).size;
   const media = {
     mimeType: FILETYPE,
     body: fileWrite,
@@ -67,15 +67,13 @@ export async function listFiles(auth) {
   const drive = google.drive({ version: 'v3', auth });
   const res = await drive.files.create({
     resource: {
-      name: FILENAME,
+      name: path.basename(FILEPATH),
       mimeType: FILETYPE,
     },
     media,
     fields: 'id',
   });
-  console.log(res.data);
 }
-
 /*
 onUploadProgress: (evt) => {
         const progress = (evt.bytesRead / fileSize) * 100;

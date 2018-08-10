@@ -43,9 +43,9 @@ var _mimeTypes2 = _interopRequireDefault(_mimeTypes);
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
-var FILENAME = process.argv[2];
-var FILETYPE = _mimeTypes2.default.lookup(FILENAME);
-
+var FILEPATH = process.argv[2]; // Relative to Homedir
+var FILETYPE = _mimeTypes2.default.lookup("HorseHead.jpg");
+console.log(FILETYPE);
 var SCOPES = ['https://www.googleapis.com/auth/drive.file'];
 var TOKEN_PATH = 'token.json';
 
@@ -93,10 +93,10 @@ async function authorize(credentials) {
 
 async function listFiles(auth) {
   var fileMetadata = {
-    name: FILENAME
+    name: _path2.default.basename(FILEPATH)
   };
-  var fileWrite = _fs2.default.createReadStream(_path2.default.join((0, _os.homedir)(), 'Pictures', FILENAME));
-  var fileSize = _fs2.default.statSync(_path2.default.join((0, _os.homedir)(), 'Pictures', FILENAME)).size;
+  var fileWrite = _fs2.default.createReadStream(_path2.default.resolve((0, _os.homedir)(), FILEPATH));
+  // const fileSize = fs.statSync(path.resolve(homedir(), FILEPATH)).size;
   var media = {
     mimeType: FILETYPE,
     body: fileWrite
@@ -104,15 +104,13 @@ async function listFiles(auth) {
   var drive = _googleapis.google.drive({ version: 'v3', auth: auth });
   var res = await drive.files.create({
     resource: {
-      name: FILENAME,
+      name: _path2.default.basename(FILEPATH),
       mimeType: FILETYPE
     },
     media: media,
     fields: 'id'
   });
-  console.log(res.data);
 }
-
 /*
 onUploadProgress: (evt) => {
         const progress = (evt.bytesRead / fileSize) * 100;
