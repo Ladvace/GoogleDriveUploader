@@ -37,9 +37,14 @@ var _promptSync = require('prompt-sync');
 
 var _promptSync2 = _interopRequireDefault(_promptSync);
 
+var _mimeTypes = require('mime-types');
+
+var _mimeTypes2 = _interopRequireDefault(_mimeTypes);
+
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
-var FILENAME = '813427.jpg';
+var FILENAME = process.argv[2];
+var FILETYPE = _mimeTypes2.default.lookup(FILENAME);
 
 var SCOPES = ['https://www.googleapis.com/auth/drive.file'];
 var TOKEN_PATH = 'token.json';
@@ -90,16 +95,27 @@ async function listFiles(auth) {
   var fileMetadata = {
     name: FILENAME
   };
+  var fileWrite = _fs2.default.createReadStream(_path2.default.join((0, _os.homedir)(), 'Pictures', FILENAME));
+  var fileSize = _fs2.default.statSync(_path2.default.join((0, _os.homedir)(), 'Pictures', FILENAME)).size;
   var media = {
-    mimeType: 'image/jpeg',
-    body: _fs2.default.createReadStream(_path2.default.join((0, _os.homedir)(), 'Pictures', FILENAME))
+    mimeType: FILETYPE,
+    body: fileWrite
   };
   var drive = _googleapis.google.drive({ version: 'v3', auth: auth });
-  var createDFile = _bluebird.Promise.promisify(drive.files.create);
-  var file = await createDFile({
-    resource: fileMetadata,
+  var res = await drive.files.create({
+    resource: {
+      name: FILENAME,
+      mimeType: FILETYPE
+    },
     media: media,
     fields: 'id'
   });
-  console.log(file.data.id);
+  console.log(res.data);
 }
+
+/*
+onUploadProgress: (evt) => {
+        const progress = (evt.bytesRead / fileSize) * 100;
+        console.log(`TOTAL FILE SIZE: ${fileSize} -- UPLOADED SO FAR: ${JSON.stringify(evt)}`);
+      },
+*/

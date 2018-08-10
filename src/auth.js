@@ -7,9 +7,10 @@ import opn from 'opn';
 import path from 'path';
 import { homedir } from 'os';
 import prompt from 'prompt-sync';
+import mime from 'mime-types';
 
-
-const FILENAME = '813427.jpg';
+const FILENAME = process.argv[2];
+const FILETYPE = mime.lookup(FILENAME);
 
 const SCOPES = ['https://www.googleapis.com/auth/drive.file'];
 const TOKEN_PATH = 'token.json';
@@ -57,16 +58,27 @@ export async function listFiles(auth) {
   const fileMetadata = {
     name: FILENAME,
   };
+  const fileWrite = fs.createReadStream(path.join(homedir(), 'Pictures', FILENAME));
+  const fileSize = fs.statSync(path.join(homedir(), 'Pictures', FILENAME)).size;
   const media = {
-    mimeType: 'image/jpeg',
-    body: fs.createReadStream(path.join(homedir(), 'Pictures', FILENAME)),
+    mimeType: FILETYPE,
+    body: fileWrite,
   };
   const drive = google.drive({ version: 'v3', auth });
-  const createDFile = Promise.promisify(drive.files.create);
-  const file = await createDFile({
-    resource: fileMetadata,
+  const res = await drive.files.create({
+    resource: {
+      name: FILENAME,
+      mimeType: FILETYPE,
+    },
     media,
     fields: 'id',
   });
-  console.log(file.data.id);
+  console.log(res.data);
 }
+
+/*
+onUploadProgress: (evt) => {
+        const progress = (evt.bytesRead / fileSize) * 100;
+        console.log(`TOTAL FILE SIZE: ${fileSize} -- UPLOADED SO FAR: ${JSON.stringify(evt)}`);
+      },
+*/      
